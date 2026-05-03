@@ -2,40 +2,18 @@
 main_sto_midpoint_tracking.py
 =============================
 
-Faithful implementation of Neural Control (paper "Neural Control: Adjoint
-Learning Through Equilibrium Constraints") on midpoint trajectory tracking
-for a 2D elastic strip. Supports both training modes:
+Midpoint trajectory tracking for a 2D elastic strip. Supports both training modes:
 
-  --rhc OFF (default): Adjoint-only (paper Sec. 3.1–3.2 + App. A).
+  --rhc OFF (default): Adjoint-only. 
                        One full-horizon segment of K = n_steps continuation
                        steps; one controller Theta optimized end-to-end.
 
-  --rhc ON           : Adjoint+RHC (paper Sec. 3.3, Algorithm 1 outer loop).
-                       K split into M = K / segment_horizon segments of
-                       length H. Fresh controller Theta and fresh per-step
+  --rhc ON           : Adjoint+RHC Fresh controller Theta and fresh per-step
                        STO list per segment. After T_seg = epochs, execute
                        the segment once with best Theta to advance the
                        realized state; next segment continues from there.
 
 The Stateful Tangent Operator (STO) is layered on as **acceleration only**.
-With STO on or off, the algorithm — bounded continuation controller (Eq. 3,
-App. D), exact equilibrium rollout (Eq. 25), frozen-tangent proxy adjoint
-(Eqs. 32–36), and the gradient formula `dL/du_k = Δλ B_k^T (g_{k+1} +
-S_k^T a_{k+1})` (Eq. 36) — is identical. STO is wired into exactly one
-primitive: the per-step `S_k^T v` operation (Eq. 29).
-
-Specialization for this task: the continuation state z is the 6D boundary
-control itself and z_{k+1} = z_k + Δλ u_k. Each equilibrium x_i depends on
-the current boundary state z_i, so the proxy adjoint becomes a cumulative
-control-space sum
-
-    h_i = S_i^T w_i,       w_i = ∂L/∂x_i mapped to free DOFs
-    c_i = h_i + c_{i+1}
-    dL/du_{i-1} = Δλ c_i,  i = K, ..., 1.
-
-STO is wired into exactly the h_i = S_i^T w_i primitive. The anchor x_0 is
-still solved in the forward pass, but it has no trajectory loss term here and
-does not enter dL/du.
 """
 
 from __future__ import annotations
@@ -513,7 +491,7 @@ def make_sto_list(args, n_records: int) -> List[DLOStatefulTangentOperator]:
 
 
 # ==========================================================================
-# Teacher target generation
+# Target generation
 # ==========================================================================
 
 
