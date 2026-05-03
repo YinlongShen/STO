@@ -62,9 +62,7 @@ The bound
 
     eta := kappa * rho
 
-for diagnostics, but is NOT used as a gate. The two physical criteria
-(operator faithfulness and conditioning) are sufficient and decouple a
-cheap, always-on signal from an expensive one.
+for diagnostics.
 
 Adaptive kappa cadence
 ----------------------
@@ -84,15 +82,6 @@ period and reused. As soon as rho rises near the reject threshold we pay
 for a fresh kappa on every call, which is precisely the regime where the
 bound matters.
 
-Notes
------
-This is a dense research prototype. It caches M explicitly using NumPy.
-A production-scale version can replace M with a sparse factorization or
-matrix-free approximate inverse without changing the validate-before-reuse
-lifecycle.
-
-Paper correspondence: P_hat = Eq. (8), T_hat = Eq. (11), residual r_s =
-Eq. (12), error bound = Eq. (14), drift bound = Eq. (15).
 """
 
 from enum import Enum
@@ -161,16 +150,6 @@ class STOStats:
         """
         Optimistic, init-free reuse multiplier.
 
-        Equals (n_cached + n_exact) / n_exact, i.e. the number of solves
-        that would have been needed under always-exact divided by the
-        number actually performed as fallback. Treats both cache hits
-        and initializations as free, so it overstates true wall-clock
-        savings whenever n_init or C_query is non-negligible.
-
-        Use StatefulTangentOperator.amortized_speedup(cost_ratio) for
-        the init-aware speedup that matches the paper's cost model
-            baseline = (n_cached + n_exact) * C_solve
-            actual   = (n_init + n_exact) * C_solve + n_cached * C_query.
         """
         return self.n_total / max(self.n_exact, 1)
 
